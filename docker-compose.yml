@@ -1,0 +1,51 @@
+version: "1.0"
+services:
+  app:
+    build:
+      args:
+        user: ${DB_DATABASE}
+        uid: 1000
+      context: ./
+      dockerfile: Dockerfile
+    image: goteamtest
+    container_name: goteamtest-app
+    restart: unless-stopped
+    working_dir: /var/www/
+    volumes:
+      - ./:/var/www
+    networks:
+      - goteam
+
+  db:
+    container_name: goteamtest-db
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_ALLOW_EMPTY_PASSWORD: 1
+      MYSQL_ROOT_PASSWORD: ""
+    image: mysql:8.0
+    command:
+      --max_allowed_packet=32505856
+      --group_concat_max_len=102400
+    networks:
+      - goteam
+    ports:
+      - "3306:3306"
+    restart: always
+    volumes:
+      - ./data/:/var/lib/mysql
+
+  nginx:
+    image: nginx:alpine
+    container_name: goteamtest-nginx
+    restart: unless-stopped
+    ports:
+      - 8000:80
+    volumes:
+      - ./:/var/www
+      - ./.docker/nginx:/etc/nginx/conf.d/
+    networks:
+      - goteam
+
+networks:
+  goteam:
+    driver: bridge
